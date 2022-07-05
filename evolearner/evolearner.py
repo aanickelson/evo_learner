@@ -57,6 +57,7 @@ class EvoLearner:
         #     self.rewards[i] = np.random.randint(0, 100, 10)
 
     def evolve(self):
+        pass
 
 
 if __name__ == '__main__':
