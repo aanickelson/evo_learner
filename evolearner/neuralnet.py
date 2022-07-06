@@ -12,9 +12,9 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(n_inputs, n_inputs * 2),
+            nn.Linear(1, n_inputs),
             nn.ReLU(),
-            nn.Linear(n_inputs * 2, n_outputs * 2),
+            nn.Linear(n_inputs, n_outputs * 2),
             nn.ReLU(),
             nn.Linear(n_outputs * 2, n_outputs)
         )
@@ -31,7 +31,10 @@ class NeuralNetwork(nn.Module):
 
         """
         x = torch.Tensor(x)
-        logits = self.linear_relu_stack(x)
+        # print(x.size())
+        flat_x = torch.flatten(x)
+        # print(flat_x.size())
+        logits = self.linear_relu_stack(flat_x)
         return logits
 
 

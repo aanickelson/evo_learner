@@ -14,7 +14,7 @@ class EvoLearner:
         self.rewards = []                   # array of rewards earned for each policy
         self.env = Domain(self.n_agents, self.n_poi, self.poi_options)
         self.n_in = self.env.state_size()   # number of inputs from the state
-        self.n_out = self.n_poi + 1         # number of outputs (actions)
+        self.n_out = self.env.get_action_size()      # number of outputs (actions)
         self.reset()
 
     def reset(self):
@@ -49,12 +49,6 @@ class EvoLearner:
             # add score to rewards
             for ind in indices:
                 self.rewards[ind].append(G)
-
-        print(self.rewards)
-
-        # dummy values for testing
-        # for i in range(self.pop_size):
-        #     self.rewards[i] = np.random.randint(0, 100, 10)
 
     def evolve(self):
         pass
