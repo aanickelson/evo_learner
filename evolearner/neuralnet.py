@@ -12,7 +12,7 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
-            nn.Linear(1, n_inputs),
+            nn.Linear(n_inputs, n_inputs),
             nn.ReLU(),
             nn.Linear(n_inputs, n_outputs * 2),
             nn.ReLU(),
@@ -44,6 +44,10 @@ if __name__ == '__main__':
     model = NeuralNetwork(6, 8).to(device)
     rand_list = [1,2,3,3,2,1]
     ins = torch.Tensor(rand_list)
-    outs = model(ins).detach().numpy()
-    print(outs)
-    print(np.argmax(outs))
+    print(list(model.parameters()))
+    model.perturb_weights()
+    print(list(model.parameters()))
+    #
+    # outs = model(ins).detach().numpy()
+    # print(outs)
+    # print(np.argmax(outs))
