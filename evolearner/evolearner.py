@@ -10,21 +10,19 @@ from evo_learner.evolearner.neuralnet import NeuralNetwork as NN
 from teaming.domain import DiscreteRoverDomain as Domain
 
 class EvoLearner:
-    def __init__(self, n_agents, n_poi, poi_opt):
-        self.n_agents = n_agents            # number of agents
-        self.n_poi = n_poi                  # number of POI
-        self.poi_options = poi_opt          # POI options
+    def __init__(self, env, tot_epochs=10000):
         self.pop_size = 20                  # population size for evolution
-        self.num_keep = 5                   # number to keep at each evolution step
+        self.num_keep = 10                  # number to keep at each evolution step
         self.policies = []                  # policies
         self.rewards = []                   # array of rewards earned for each policy
-        self.tot_epochs = 100000
+        self.tot_epochs = tot_epochs
         self.avg_rew_per_epoch = np.zeros(self.tot_epochs)
-        self.env = Domain(self.n_agents, self.n_poi, self.poi_options)
+        self.env = env
         self.n_in = self.env.state_size()   # number of inputs from the state
         self.n_out = self.env.get_action_size()      # number of outputs (actions)
         # self.device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = "cpu"
+        self.avg_falses = []
         self.reset()
 
     def reset(self, policies=None):
@@ -57,18 +55,23 @@ class EvoLearner:
             writer.writerow(data)
 
     def evaluate(self, iterations):
+        avg_falses = []
         for _ in range(iterations):
             # select n_agents number of agents
-            indices = np.random.randint(0, self.pop_size, self.n_agents)
+            indices = np.random.randint(0, self.pop_size, self.env.N_agents)
             agents = [self.policies[i] for i in indices]
             # get score for each
-            G = self.env.run_sim(agents)
+            max_g = self.env.theoretical_max_g
+            global_rew, avg_false = self.env.run_sim(agents)
+            G = global_rew / max_g
+            avg_falses.append(avg_false)
             # add score to rewards
             for ind in indices:
                 curr_rew, tot = self.rewards[ind]
                 self.rewards[ind][0] = ((curr_rew * tot) + G) / (tot + 1)        # running average
                 self.rewards[ind][1] += 1
             self.env.reset()
+        self.avg_falses.append(np.mean(avg_falses))
 
     def evolve(self, n_best, sigma):
         num_evo = ceil((self.pop_size - self.num_keep) / self.num_keep)           # Number of times to evolve each NN
@@ -90,31 +93,37 @@ class EvoLearner:
         # Reset the population to the new population
         self.reset(policies=new_pop)
 
-    def train(self, epochs=20, sigma=0.1):
+    def train(self, trial_num, epochs=20, sigma=0.1):
         start = time()
-        for i in range(self.tot_epochs):
-            if i > 0:
-                n_best = self.pick_n_best()
-                self.evolve(n_best, sigma)
+        self.evaluate(epochs)
+        self.avg_rew_per_epoch[0] = np.mean(self.rewards[:, 0])
+
+        for i in range(1, self.tot_epochs):
+            self.env.new_env()      # Reset the environment to a new random configuration
+            n_best = self.pick_n_best()
+            self.evolve(n_best, sigma)
             self.evaluate(epochs)
             self.avg_rew_per_epoch[i] = np.mean(self.rewards[:, 0])
             if not i % 100:
-                print(np.mean(self.rewards[:, 0]))
+                print("{:10}: {}".format(i, np.mean(self.rewards[:, 0])))
+                np.savetxt("trial{}.csv".format(trial_num), self.avg_rew_per_epoch, delimiter=",")
+                np.savetxt("trial{}_false.csv".format(trial_num), self.avg_falses, delimiter=',')
+                if i > 0:
+                    print("avg false:", np.mean(self.avg_falses[-100:]))
 
-        np.savetxt("trial1.csv", self.avg_rew_per_epoch, delimiter=",")
-        print("{:8}: {}".format(self.tot_epochs, np.mean(self.avg_rew_per_epoch[-10:])))
+        np.savetxt("trial{}.csv".format(trial_num), self.avg_rew_per_epoch, delimiter=",")
+        np.savetxt("trial{}_false.csv".format(trial_num), self.avg_falses, delimiter=',')
+        print("{:10}: {}".format(self.tot_epochs, np.mean(self.avg_rew_per_epoch[-10:])))
         print("time:", time() - start)
-
+        print("avg false:", np.mean(self.avg_falses[-100:]))
 
 
 if __name__ == '__main__':
-    evo = EvoLearner(n_agents=3, n_poi=10, poi_opt=[[100, 1, 0]])
-    evo.train()
-    # evo.evaluate(20)
-    # evo.evolve(evo.pick_n_best(), sigma=0.1)
-    #
-    # print(evo.rewards)
-    # for arr in evo.rewards:
-    #     print(np.mean(arr))
-    # print(evo.rewards)
-    # print(evo.pick_n_best(3))
+    n_agents = 3
+    n_poi = 10
+    poi_opt = [[100, 1, 0]]  # , [10, 1, 1]]
+    env = Domain(n_agents, n_poi, poi_opt)
+
+    evo = EvoLearner(env, tot_epochs=10000)
+    evo.train(trial_num=10, sigma=0.5)
+
