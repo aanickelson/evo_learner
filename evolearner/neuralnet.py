@@ -8,16 +8,16 @@ import numpy as np
 
 # NN model taken from https://pytorch.org/tutorials/beginner/basics/buildmodel_tutorial.html
 class NeuralNetwork(nn.Module):
-    def __init__(self, n_inputs, n_outputs):
+    def __init__(self, n_inputs, hid, n_outputs):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(n_inputs, n_inputs),
-            nn.ReLU(),
-            nn.Linear(n_inputs, n_outputs * 2),
-            nn.ReLU(),
-            nn.Linear(n_outputs * 2, n_outputs)
+        self.model = nn.Sequential(
+            nn.Linear(n_inputs, hid),
+            nn.ReLU(inplace=True),
+            nn.Linear(hid, n_outputs),
+            nn.ReLU(inplace=True),
         )
+        self.model.requires_grad_(False)
 
     def forward(self, x):
         """
@@ -34,7 +34,7 @@ class NeuralNetwork(nn.Module):
         # print(x.size())
         flat_x = torch.flatten(x)
         # print(flat_x.size())
-        logits = self.linear_relu_stack(flat_x)
+        logits = self.model(flat_x)
         return logits
 
 

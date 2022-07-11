@@ -18,18 +18,27 @@ def average_every_n(n, data):
     return avg, sterr
 
 
-def plot_it(avgs, sterrs, n):
+def plot_it(avgs, sterrs, n, fname):
+    plt.clf()
     x_vals = [n*i for i in range(len(avgs))]
     plt.plot(x_vals, avgs, 'k-')
-    plt.fill_between(x_vals, avgs-sterrs, avgs+sterrs)
+    plt.fill_between(x_vals, avgs-sterrs, avgs+sterrs, alpha=0.5)
     plt.xlabel("Epoch")
-    plt.ylabel("Percent of time null actions chosen")
-    plt.title("Percent null actions chosen")
-    plt.savefig('trial10_false.png')
+    if 'false' in fname:
+        plt.ylabel("Percent of time null actions chosen")
+        plt.title("Percent null actions chosen")
+    else:
+        plt.ylabel("Percent total reward captured")
+        plt.title("Reward captured by agents")
+    plt.savefig('{}.png'.format(fname))
 
 
 if __name__ == '__main__':
-    data = np.loadtxt("trial10_false.csv")
-    n = 200
-    avgs, sterrs = average_every_n(n, data)
-    plot_it(avgs, sterrs, n)
+    filename = "trial10"
+    extensions = ['_avg', '_false', "_max"]
+    for ext in extensions:
+        filename2 = filename + ext
+        data = np.loadtxt("{}.csv".format(filename2))
+        n = 100
+        avgs, sterrs = average_every_n(n, data)
+        plot_it(avgs, sterrs, n, filename2)
