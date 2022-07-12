@@ -34,11 +34,11 @@ def plot_it(avgs, sterrs, n, fname):
 
 
 if __name__ == '__main__':
-    filename = "trial10"
+    filename = "trial1"
     extensions = ['_avg', '_false', "_max"]
     for ext in extensions:
         filename2 = filename + ext
         data = np.loadtxt("{}.csv".format(filename2))
-        n = 100
+        n = 20
         avgs, sterrs = average_every_n(n, data)
         plot_it(avgs, sterrs, n, filename2)

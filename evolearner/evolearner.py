@@ -75,7 +75,9 @@ class EvoLearner:
             # add score to rewards
             for ind in indices:
                 curr_rew, tot = self.rewards[ind]
-                self.rewards[ind][0] = ((curr_rew * tot) + G) / (tot + 1)        # running average
+                if self.rewards[ind][0] < G:
+                    self.rewards[ind][0] = G    # Keep only the best score
+                # self.rewards[ind][0] = ((curr_rew * tot) + G) / (tot + 1)        # running average
                 self.rewards[ind][1] += 1
             self.env.reset()
         self.avg_falses.append(np.mean(avg_falses))
@@ -100,7 +102,7 @@ class EvoLearner:
         # Reset the population to the new population
         self.reset(policies=new_pop)
 
-    def train(self, trial_num, epochs=50, sigma=0.1):
+    def train(self, trial_num, epochs=50, sigma=0.5):
         start = time()
         self.evaluate(epochs)
         self.avg_rew_per_epoch[0] = np.mean(self.rewards[:, 0])
