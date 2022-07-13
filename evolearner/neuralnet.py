@@ -42,16 +42,11 @@ class NeuralNetwork(nn.Module):
 
 
 class EvolveNN:
-    def __init__(self, env):
+    def __init__(self, env, p):
         self.env = env
-        self.sigma = 0.1
-        self.learning_rate = 0.03
-
-        self.n_in = env.state_size()
-        self.n_out = env.get_action_size()
-        self.hid = self.n_in + self.n_out
-        # print(self.n_in, self.hid, self.n_out)
-        self.model = NeuralNetwork(self.n_in, self.hid, self.n_out)
+        self.sigma = p.sigma
+        self.learning_rate = p.learning_rate
+        self.model = NeuralNetwork(env.state_size(), p.hid, env.get_action_size())
         self.start_weights = self.model.get_weights()
 
     def score_genome(self, weights):
@@ -83,12 +78,3 @@ class EvolveNN:
             new_weights.append(nw)
         return new_weights
 
-
-if __name__ == '__main__':
-    # Get cpu or gpu device for training.
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    device = 'cpu'
-    model = NeuralNetwork(6, 20, 8).to(device)
-    rand_list = [1, 2, 3, 3, 2, 1]
-    ins = torch.Tensor(rand_list)
-    print(list(model.get_weights()))

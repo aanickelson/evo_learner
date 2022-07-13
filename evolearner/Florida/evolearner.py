@@ -63,7 +63,7 @@ class EvoLearner:
         avg_falses = []
         for _ in range(iterations):
             # select n_agents number of agents
-            indices = np.random.randint(0, self.pop_size, self.env.N_agents)
+            indices = np.random.randint(0, self.pop_size, self.env.n_agents)
             agents = [self.policies[i] for i in indices]
             # get score for each
             max_g = self.env.theoretical_max_g
